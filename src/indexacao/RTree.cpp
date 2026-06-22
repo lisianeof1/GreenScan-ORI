@@ -51,7 +51,6 @@ void RTree::inserir(const AreaVerde& area) {
         raiz = novaRaiz;
     }
 }
-}
 std::shared_ptr<RTree::No> RTree::inserirRecursivo(std::shared_ptr<No> no, const AreaVerde& area) {
     if (no->isFolha) {
         no->dados.push_back(area);
