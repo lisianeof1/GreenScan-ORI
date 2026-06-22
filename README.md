@@ -1,6 +1,6 @@
 # GreenScan 🌱
 
-**Disciplina:** Organização e Recuperação da Informação (ORI)[cite: 1, 2]  
+**Disciplina:** Organização e Recuperação da Informação (ORI)
 **Equipe:** 
 * Kamila de Freitas Alves
 * Letícia Viggiani Moura
@@ -9,11 +9,11 @@
 ---
 
 ## 📌 Sobre o Projeto
-O **GreenScan** é um protótipo desenvolvido em C++ focado na organização, armazenamento e recuperação eficiente de dados espaciais[cite: 3]. O sistema trabalha sobre um mapa cartesiano 2D simulado (1000x1000 unidades) que representa áreas verdes de São Carlos.
+O **GreenScan** é um protótipo desenvolvido em C++ focado na organização, armazenamento e recuperação eficiente de dados espaciais. O sistema trabalha sobre um mapa cartesiano 2D simulado (1000x1000 unidades) que representa áreas verdes de São Carlos.
 
 O objetivo central é implementar do zero e comparar o uso de duas estruturas de dados avançadas para memória secundária:
-1. **QuadTree:** Para particionamento hierárquico do espaço do mapa[cite: 1, 3].
-2. **R-Tree:** Para indexação e agrupamento dos polígonos (Minimum Bounding Rectangles - MBR) das áreas verdes[cite: 1, 3].
+1. **QuadTree:** Para particionamento hierárquico do espaço do mapa.
+2. **R-Tree:** Para indexação e agrupamento dos polígonos (Minimum Bounding Rectangles - MBR) das áreas verdes.
 
 ---
 
