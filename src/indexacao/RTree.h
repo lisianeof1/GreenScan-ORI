@@ -46,7 +46,12 @@ private:
     // Métodos auxiliares internos
     Retangulo calcularMBR(const std::vector<Retangulo>& retangulos);
     bool intercepta(const Retangulo& r1, const Retangulo& r2);
-    void inserirRecursivo(std::shared_ptr<No> no, const AreaVerde& area);
+    
+    // ATUALIZAÇÃO: Agora retorna um ponteiro para um novo nó caso ocorra um Split
+    std::shared_ptr<No> inserirRecursivo(std::shared_ptr<No> no, const AreaVerde& area);
+    
+    // NOVO: Método para lidar com a divisão do array
+    void dividirNo(std::shared_ptr<No> no, std::shared_ptr<No> novoNo);
 };
 
 #endif // RTREE_H
