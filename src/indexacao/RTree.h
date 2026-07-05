@@ -3,12 +3,15 @@
 
 #include <vector>
 #include <memory>
-#include "QuadTree.h" // Importando o Retangulo da Leticia!
+#include <string>
+#include "QuadTree.h" // Retangulo vem daqui
 
-// A struct AreaVerde continua aqui para a R-Tree usar
 struct AreaVerde {
     int id;
     Retangulo boundingBox;
+    std::string nome;
+    std::string tipo;
+    std::string densidade; 
 };
 
 const int MAX_ENTRIES = 4;
@@ -30,6 +33,12 @@ public:
 
     void inserir(const AreaVerde& area);
     std::vector<AreaVerde> buscarPorRegiao(const Retangulo& regiaoBusca);
+    
+    // Novas consultas espaciais
+    std::vector<AreaVerde> buscarPorDensidade(const std::string& densidade);
+    std::vector<std::pair<AreaVerde, AreaVerde>> buscarSobreposicoes();
+    std::vector<AreaVerde> buscarPorRaio(double cx, double cy, double raio);
+    AreaVerde* buscarVizinhoMaisProximo(double x, double y);
 
 private:
     std::shared_ptr<No> raiz;
@@ -39,6 +48,8 @@ private:
     std::shared_ptr<No> inserirRecursivo(std::shared_ptr<No> no, const AreaVerde& area);
     void dividirNo(std::shared_ptr<No> no, std::shared_ptr<No> novoNo);
     void buscarRecursivo(std::shared_ptr<No> no, const Retangulo& regiaoBusca, std::vector<AreaVerde>& resultados);
+    void coletarTodas(std::shared_ptr<No> no, std::vector<AreaVerde>& todas);
+    double distanciaPontoRetangulo(double px, double py, const Retangulo& r);
 };
 
 #endif // RTREE_H
