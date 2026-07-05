@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 #include <string>
-#include "QuadTree.h" // Retangulo vem daqui
+#include "../indexacao/QuadTree.h" // Retangulo vem daqui
 
 struct AreaVerde {
     int id;
