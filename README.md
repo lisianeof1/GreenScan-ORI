@@ -67,3 +67,9 @@ Para manter o repositório organizado e evitar conflitos de código, seguiremos 
    `git push origin main`
 
 *Atenção: A integração final será feita pela Lisiane no arquivo `main.cpp`. Se precisarem alterar um arquivo que não seja o seu, comuniquem a equipe primeiro!*
+
+###Anotações: o que preciso fazer (Lisi)
+- apagar main.cpp da leticia, antes colocar o conteudo na main ja existente
+- colocar todos os codigos da leticia no lugar certo se ela n colocar
+- acrescentar tudo na main original
+- consultas
