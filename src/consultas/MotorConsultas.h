@@ -4,20 +4,24 @@
 #include "../indexacao/RTree.h"
 #include "../indexacao/QuadTree.h"
 #include <vector>
+#include <string>
 
 class MotorConsultas {
 private:
     RTree& rtree;
     QuadTree& quadtree;
 
+    void contarQuadTreeRecursivo(const QuadTree* qt, int nivel);
+
 public:
-    // O motor guarda a referência das duas árvores ativas no sistema
     MotorConsultas(RTree& rt, QuadTree& qt);
 
-    // Consulta 1: Busca por Região (usando a R-Tree que você implementou)
     std::vector<AreaVerde> executarBuscaPorRegiao(const Retangulo& regiao);
-    
-    // As outras consultas entrarão aqui nas próximas etapas!
+    void executarBuscaMaisProximo(double x, double y);
+    std::vector<AreaVerde> executarBuscaPorDensidade(const std::string& densidade);
+    void executarContagemQuadTree();
+    void executarBuscaSobreposicao();
+    std::vector<AreaVerde> executarBuscaPorRaio(double cx, double cy, double raio);
 };
 
 #endif
