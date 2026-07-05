@@ -3,32 +3,24 @@
 
 #include <vector>
 #include <memory>
+#include "QuadTree.h" // Importando o Retangulo da Leticia!
 
-// =========================================================================
-// MOCKS (Simulações temporárias do Módulo Core da Kamila para podermos testar)
-// Quando ela terminar, apagaremos isso e faremos o #include dos arquivos dela.
-struct Retangulo {
-    double x, y, largura, altura;
-};
-
+// A struct AreaVerde continua aqui para a R-Tree usar
 struct AreaVerde {
     int id;
     Retangulo boundingBox;
 };
-// =========================================================================
 
-// Constantes da R-Tree
-const int MAX_ENTRIES = 4; // Capacidade máxima de um nó (M)
-const int MIN_ENTRIES = 2; // Capacidade mínima de um nó (m)
+const int MAX_ENTRIES = 4;
+const int MIN_ENTRIES = 2;
 
 class RTree {
 public:
-    // Estrutura interna do Nó da R-Tree
     struct No {
         bool isFolha;
-        std::vector<Retangulo> mbrs; // Minimum Bounding Rectangles das entradas
-        std::vector<std::shared_ptr<No>> filhos; // Ponteiros para os filhos (se não for folha)
-        std::vector<AreaVerde> dados; // Dados reais (apenas se for folha)
+        std::vector<Retangulo> mbrs;
+        std::vector<std::shared_ptr<No>> filhos;
+        std::vector<AreaVerde> dados;
 
         No(bool folha) : isFolha(folha) {}
     };
@@ -36,20 +28,16 @@ public:
     RTree();
     ~RTree();
 
-    // Métodos principais usados no Motor de Consultas
     void inserir(const AreaVerde& area);
     std::vector<AreaVerde> buscarPorRegiao(const Retangulo& regiaoBusca);
 
 private:
     std::shared_ptr<No> raiz;
 
-    // Métodos auxiliares internos
     Retangulo calcularMBR(const std::vector<Retangulo>& retangulos);
     bool intercepta(const Retangulo& r1, const Retangulo& r2);
-
     std::shared_ptr<No> inserirRecursivo(std::shared_ptr<No> no, const AreaVerde& area);
     void dividirNo(std::shared_ptr<No> no, std::shared_ptr<No> novoNo);
-
     void buscarRecursivo(std::shared_ptr<No> no, const Retangulo& regiaoBusca, std::vector<AreaVerde>& resultados);
 };
 
