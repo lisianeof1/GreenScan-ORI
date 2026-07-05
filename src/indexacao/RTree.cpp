@@ -118,3 +118,35 @@ void RTree::dividirNo(std::shared_ptr<No> no, std::shared_ptr<No> novoNo) {
         no->filhos.erase(no->filhos.begin() + meio, no->filhos.end());
     }
 }
+
+bool RTree::intercepta(const Retangulo& r1, const Retangulo& r2) {
+    // Retorna verdadeiro se os retângulos se sobrepõem
+    bool foraX = (r1.x + r1.largura < r2.x) || (r2.x + r2.largura < r1.x);
+    bool foraY = (r1.y + r1.altura < r2.y) || (r2.y + r2.altura < r1.y);
+    return !(foraX || foraY);
+}
+
+std::vector<AreaVerde> RTree::buscarPorRegiao(const Retangulo& regiaoBusca) {
+    std::vector<AreaVerde> resultados;
+    buscarRecursivo(raiz, regiaoBusca, resultados);
+    return resultados;
+}
+
+void RTree::buscarRecursivo(std::shared_ptr<No> no, const Retangulo& regiaoBusca, std::vector<AreaVerde>& resultados) {
+    if (no->isFolha) {
+        // Se chegou na folha, verifica quais Áreas Verdes realmente tocam a região de busca
+        for (size_t i = 0; i < no->dados.size(); ++i) {
+            if (intercepta(no->mbrs[i], regiaoBusca)) {
+                resultados.push_back(no->dados[i]);
+            }
+        }
+    } else {
+        // Se é nó interno, verifica quais filhos têm MBRs que cruzam com a região de busca
+        for (size_t i = 0; i < no->filhos.size(); ++i) {
+            if (intercepta(no->mbrs[i], regiaoBusca)) {
+                // Só desce a recursão se houver interseção
+                buscarRecursivo(no->filhos[i], regiaoBusca, resultados);
+            }
+        }
+    }
+}
