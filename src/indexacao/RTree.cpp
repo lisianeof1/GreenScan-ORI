@@ -1,11 +1,9 @@
 #include "RTree.h"
 #include <algorithm>
 #include <limits>
+#include <cmath>
 
-// --- Funções Auxiliares de Geometria (Locais) ---
-double calcularArea(const Retangulo& r) {
-    return r.largura * r.altura;
-}
+double calcularArea(const Retangulo& r) { return r.largura * r.altura; }
 
 Retangulo unirRetangulos(const Retangulo& r1, const Retangulo& r2) {
     double minX = std::min(r1.x, r2.x);
@@ -14,17 +12,12 @@ Retangulo unirRetangulos(const Retangulo& r1, const Retangulo& r2) {
     double maxY = std::max(r1.y + r1.altura, r2.y + r2.altura);
     return {minX, minY, maxX - minX, maxY - minY};
 }
-// ------------------------------------------------
 
-RTree::RTree() {
-    raiz = std::make_shared<No>(true);
-}
-
+RTree::RTree() { raiz = std::make_shared<No>(true); }
 RTree::~RTree() {}
 
 Retangulo RTree::calcularMBR(const std::vector<Retangulo>& retangulos) {
     if (retangulos.empty()) return {0, 0, 0, 0};
-    
     Retangulo mbrTotal = retangulos[0];
     for (size_t i = 1; i < retangulos.size(); ++i) {
         mbrTotal = unirRetangulos(mbrTotal, retangulos[i]);
@@ -33,67 +26,47 @@ Retangulo RTree::calcularMBR(const std::vector<Retangulo>& retangulos) {
 }
 
 void RTree::inserir(const AreaVerde& area) {
-    // Agora capturamos se a recursão gerou um novo nó a partir da raiz
     std::shared_ptr<No> novoNo = inserirRecursivo(raiz, area);
-    
     if (novoNo != nullptr) {
-        // A raiz estourou a capacidade! Precisamos criar uma nova raiz acima dela.
         std::shared_ptr<No> novaRaiz = std::make_shared<No>(false);
-        
-        // Adiciona a raiz antiga como primeiro filho
         novaRaiz->filhos.push_back(raiz);
         novaRaiz->mbrs.push_back(calcularMBR(raiz->mbrs));
-        
-        // Adiciona o novo nó gerado pelo split como segundo filho
         novaRaiz->filhos.push_back(novoNo);
         novaRaiz->mbrs.push_back(calcularMBR(novoNo->mbrs));
-        
         raiz = novaRaiz;
     }
 }
+
 std::shared_ptr<RTree::No> RTree::inserirRecursivo(std::shared_ptr<No> no, const AreaVerde& area) {
     if (no->isFolha) {
         no->dados.push_back(area);
         no->mbrs.push_back(area.boundingBox);
-        
-        // Verifica se estourou a capacidade máxima
         if (no->dados.size() > MAX_ENTRIES) {
             std::shared_ptr<No> novoNo = std::make_shared<No>(true);
             dividirNo(no, novoNo);
-            return novoNo; // Retorna o novo nó para o pai lidar com ele
+            return novoNo; 
         }
-        return nullptr; // Nenhum split necessário
+        return nullptr; 
     } else {
-        // Lógica "ChooseLeaf" (já implementada na etapa anterior)
         int melhorIndice = -1;
         double menorAumentoArea = std::numeric_limits<double>::max();
-
         for (size_t i = 0; i < no->filhos.size(); ++i) {
             Retangulo mbrExpandido = unirRetangulos(no->mbrs[i], area.boundingBox);
             double aumentoArea = calcularArea(mbrExpandido) - calcularArea(no->mbrs[i]);
-            
             if (aumentoArea < menorAumentoArea) {
                 menorAumentoArea = aumentoArea;
                 melhorIndice = i;
             }
         }
-
-        // Descida recursiva
         std::shared_ptr<No> novoFilho = inserirRecursivo(no->filhos[melhorIndice], area);
-        
-        // Atualiza o MBR do filho escolhido
         no->mbrs[melhorIndice] = unirRetangulos(no->mbrs[melhorIndice], area.boundingBox);
-        
-        // Se a descida gerou um novo filho (o filho splitou), precisamos acomodá-lo neste nó
         if (novoFilho != nullptr) {
             no->filhos.push_back(novoFilho);
             no->mbrs.push_back(calcularMBR(novoFilho->mbrs));
-            
-            // Verifica se este nó pai também estourou a capacidade
             if (no->filhos.size() > MAX_ENTRIES) {
                 std::shared_ptr<No> novoNoPai = std::make_shared<No>(false);
                 dividirNo(no, novoNoPai);
-                return novoNoPai; // Propaga o split para cima
+                return novoNoPai; 
             }
         }
         return nullptr;
@@ -101,29 +74,38 @@ std::shared_ptr<RTree::No> RTree::inserirRecursivo(std::shared_ptr<No> no, const
 }
 
 void RTree::dividirNo(std::shared_ptr<No> no, std::shared_ptr<No> novoNo) {
-    // Calcula o ponto de corte (metade simples)
     size_t meio = no->mbrs.size() / 2;
-    
-    // Transfere a segunda metade dos MBRs para o novo nó
     novoNo->mbrs.assign(no->mbrs.begin() + meio, no->mbrs.end());
     no->mbrs.erase(no->mbrs.begin() + meio, no->mbrs.end());
-    
     if (no->isFolha) {
-        // Se for folha, divide também os dados (Áreas Verdes)
         novoNo->dados.assign(no->dados.begin() + meio, no->dados.end());
         no->dados.erase(no->dados.begin() + meio, no->dados.end());
     } else {
-        // Se for nó interno, divide os ponteiros dos filhos
         novoNo->filhos.assign(no->filhos.begin() + meio, no->filhos.end());
         no->filhos.erase(no->filhos.begin() + meio, no->filhos.end());
     }
 }
 
 bool RTree::intercepta(const Retangulo& r1, const Retangulo& r2) {
-    // Retorna verdadeiro se os retângulos se sobrepõem
     bool foraX = (r1.x + r1.largura < r2.x) || (r2.x + r2.largura < r1.x);
     bool foraY = (r1.y + r1.altura < r2.y) || (r2.y + r2.altura < r1.y);
     return !(foraX || foraY);
+}
+
+void RTree::buscarRecursivo(std::shared_ptr<No> no, const Retangulo& regiaoBusca, std::vector<AreaVerde>& resultados) {
+    if (no->isFolha) {
+        for (size_t i = 0; i < no->dados.size(); ++i) {
+            if (intercepta(no->mbrs[i], regiaoBusca)) {
+                resultados.push_back(no->dados[i]);
+            }
+        }
+    } else {
+        for (size_t i = 0; i < no->filhos.size(); ++i) {
+            if (intercepta(no->mbrs[i], regiaoBusca)) {
+                buscarRecursivo(no->filhos[i], regiaoBusca, resultados);
+            }
+        }
+    }
 }
 
 std::vector<AreaVerde> RTree::buscarPorRegiao(const Retangulo& regiaoBusca) {
@@ -132,21 +114,71 @@ std::vector<AreaVerde> RTree::buscarPorRegiao(const Retangulo& regiaoBusca) {
     return resultados;
 }
 
-void RTree::buscarRecursivo(std::shared_ptr<No> no, const Retangulo& regiaoBusca, std::vector<AreaVerde>& resultados) {
+// --- NOVAS CONSULTAS OBRIGATÓRIAS ---
+
+void RTree::coletarTodas(std::shared_ptr<No> no, std::vector<AreaVerde>& todas) {
     if (no->isFolha) {
-        // Se chegou na folha, verifica quais Áreas Verdes realmente tocam a região de busca
-        for (size_t i = 0; i < no->dados.size(); ++i) {
-            if (intercepta(no->mbrs[i], regiaoBusca)) {
-                resultados.push_back(no->dados[i]);
-            }
-        }
+        for (const auto& area : no->dados) todas.push_back(area);
     } else {
-        // Se é nó interno, verifica quais filhos têm MBRs que cruzam com a região de busca
-        for (size_t i = 0; i < no->filhos.size(); ++i) {
-            if (intercepta(no->mbrs[i], regiaoBusca)) {
-                // Só desce a recursão se houver interseção
-                buscarRecursivo(no->filhos[i], regiaoBusca, resultados);
+        for (auto filho : no->filhos) coletarTodas(filho, todas);
+    }
+}
+
+std::vector<AreaVerde> RTree::buscarPorDensidade(const std::string& densidade) {
+    std::vector<AreaVerde> todas, filtradas;
+    coletarTodas(raiz, todas);
+    for(const auto& a : todas) {
+        if(a.densidade == densidade) filtradas.push_back(a);
+    }
+    return filtradas;
+}
+
+std::vector<std::pair<AreaVerde, AreaVerde>> RTree::buscarSobreposicoes() {
+    std::vector<AreaVerde> todas;
+    std::vector<std::pair<AreaVerde, AreaVerde>> sobreposicoes;
+    coletarTodas(raiz, todas);
+    
+    for (size_t i = 0; i < todas.size(); ++i) {
+        for (size_t j = i + 1; j < todas.size(); ++j) {
+            if (intercepta(todas[i].boundingBox, todas[j].boundingBox)) {
+                sobreposicoes.push_back({todas[i], todas[j]});
             }
         }
     }
+    return sobreposicoes;
+}
+
+double RTree::distanciaPontoRetangulo(double px, double py, const Retangulo& r) {
+    double dx = std::max({0.0, r.x - px, px - (r.x + r.largura)});
+    double dy = std::max({0.0, r.y - py, py - (r.y + r.altura)});
+    return std::sqrt(dx*dx + dy*dy);
+}
+
+std::vector<AreaVerde> RTree::buscarPorRaio(double cx, double cy, double raio) {
+    std::vector<AreaVerde> todas, noRaio;
+    coletarTodas(raiz, todas);
+    for(const auto& a : todas) {
+        if (distanciaPontoRetangulo(cx, cy, a.boundingBox) <= raio) {
+            noRaio.push_back(a);
+        }
+    }
+    return noRaio;
+}
+
+AreaVerde* RTree::buscarVizinhoMaisProximo(double x, double y) {
+    std::vector<AreaVerde> todas;
+    coletarTodas(raiz, todas);
+    if(todas.empty()) return nullptr;
+
+    AreaVerde* maisProximo = nullptr;
+    double menorDistancia = std::numeric_limits<double>::max();
+
+    for(auto& a : todas) {
+        double dist = distanciaPontoRetangulo(x, y, a.boundingBox);
+        if (dist < menorDistancia) {
+            menorDistancia = dist;
+            maisProximo = new AreaVerde(a);
+        }
+    }
+    return maisProximo;
 }
