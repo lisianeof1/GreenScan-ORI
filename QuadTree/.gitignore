@@ -1,0 +1,6 @@
+# Execut´vel
+programa
+*.exe
+
+# Arquivos Objetos
+*.o
