@@ -36,7 +36,7 @@ public:
     RTree();
     ~RTree();
 
-    // Métodos principais que você usará no Motor de Consultas
+    // Métodos principais usados no Motor de Consultas
     void inserir(const AreaVerde& area);
     std::vector<AreaVerde> buscarPorRegiao(const Retangulo& regiaoBusca);
 
@@ -46,12 +46,11 @@ private:
     // Métodos auxiliares internos
     Retangulo calcularMBR(const std::vector<Retangulo>& retangulos);
     bool intercepta(const Retangulo& r1, const Retangulo& r2);
-    
-    // ATUALIZAÇÃO: Agora retorna um ponteiro para um novo nó caso ocorra um Split
+
     std::shared_ptr<No> inserirRecursivo(std::shared_ptr<No> no, const AreaVerde& area);
-    
-    // NOVO: Método para lidar com a divisão do array
     void dividirNo(std::shared_ptr<No> no, std::shared_ptr<No> novoNo);
+
+    void buscarRecursivo(std::shared_ptr<No> no, const Retangulo& regiaoBusca, std::vector<AreaVerde>& resultados);
 };
 
 #endif // RTREE_H
