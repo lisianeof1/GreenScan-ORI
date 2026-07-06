@@ -26,6 +26,14 @@ struct Retangulo {
     long area() const {
         return static_cast<long>(largura()) * static_cast<long>(altura());
     }
+
+    // ADICIONE ESTE BLOCO AQUI EMBAIXO:
+    bool tem_ponto(const Ponto& p) const {
+        return p.x >= inferiorEsquerdo.x &&
+               p.x <= superiorDireito.x &&
+               p.y >= inferiorEsquerdo.y &&
+               p.y <= superiorDireito.y;
+    }
 };
 
 #endif // RETANGULO_H
