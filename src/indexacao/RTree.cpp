@@ -3,21 +3,24 @@
 #include <limits>
 #include <cmath>
 
-double calcularArea(const Retangulo& r) { return r.largura * r.altura; }
+double calcularArea(const Retangulo& r) { 
+    return r.area();
+}
 
 Retangulo unirRetangulos(const Retangulo& r1, const Retangulo& r2) {
-    double minX = std::min(r1.x, r2.x);
-    double minY = std::min(r1.y, r2.y);
-    double maxX = std::max(r1.x + r1.largura, r2.x + r2.largura);
-    double maxY = std::max(r1.y + r1.altura, r2.y + r2.altura);
-    return {minX, minY, maxX - minX, maxY - minY};
+    int minX = std::min(r1.inferiorEsquerdo.x, r2.inferiorEsquerdo.x);
+    int minY = std::min(r1.inferiorEsquerdo.y, r2.inferiorEsquerdo.y);
+    int maxX = std::max(r1.superiorDireito.x, r2.superiorDireito.x);
+    int maxY = std::max(r1.superiorDireito.y, r2.superiorDireito.y);
+    
+    return Retangulo(Ponto(minX, minY), Ponto(maxX, maxY));
 }
 
 RTree::RTree() { raiz = std::make_shared<No>(true); }
 RTree::~RTree() {}
 
 Retangulo RTree::calcularMBR(const std::vector<Retangulo>& retangulos) {
-    if (retangulos.empty()) return {0, 0, 0, 0};
+    if (retangulos.empty()) return Retangulo();
     Retangulo mbrTotal = retangulos[0];
     for (size_t i = 1; i < retangulos.size(); ++i) {
         mbrTotal = unirRetangulos(mbrTotal, retangulos[i]);
@@ -40,7 +43,7 @@ void RTree::inserir(const AreaVerde& area) {
 std::shared_ptr<RTree::No> RTree::inserirRecursivo(std::shared_ptr<No> no, const AreaVerde& area) {
     if (no->isFolha) {
         no->dados.push_back(area);
-        no->mbrs.push_back(area.boundingBox);
+        no->mbrs.push_back(area.getRetangulo());
         if (no->dados.size() > MAX_ENTRIES) {
             std::shared_ptr<No> novoNo = std::make_shared<No>(true);
             dividirNo(no, novoNo);
@@ -51,7 +54,7 @@ std::shared_ptr<RTree::No> RTree::inserirRecursivo(std::shared_ptr<No> no, const
         int melhorIndice = -1;
         double menorAumentoArea = std::numeric_limits<double>::max();
         for (size_t i = 0; i < no->filhos.size(); ++i) {
-            Retangulo mbrExpandido = unirRetangulos(no->mbrs[i], area.boundingBox);
+            Retangulo mbrExpandido = unirRetangulos(no->mbrs[i], area.getRetangulo());
             double aumentoArea = calcularArea(mbrExpandido) - calcularArea(no->mbrs[i]);
             if (aumentoArea < menorAumentoArea) {
                 menorAumentoArea = aumentoArea;
@@ -59,7 +62,7 @@ std::shared_ptr<RTree::No> RTree::inserirRecursivo(std::shared_ptr<No> no, const
             }
         }
         std::shared_ptr<No> novoFilho = inserirRecursivo(no->filhos[melhorIndice], area);
-        no->mbrs[melhorIndice] = unirRetangulos(no->mbrs[melhorIndice], area.boundingBox);
+        no->mbrs[melhorIndice] = unirRetangulos(no->mbrs[melhorIndice], area.getRetangulo());
         if (novoFilho != nullptr) {
             no->filhos.push_back(novoFilho);
             no->mbrs.push_back(calcularMBR(novoFilho->mbrs));
@@ -87,8 +90,8 @@ void RTree::dividirNo(std::shared_ptr<No> no, std::shared_ptr<No> novoNo) {
 }
 
 bool RTree::intercepta(const Retangulo& r1, const Retangulo& r2) {
-    bool foraX = (r1.x + r1.largura < r2.x) || (r2.x + r2.largura < r1.x);
-    bool foraY = (r1.y + r1.altura < r2.y) || (r2.y + r2.altura < r1.y);
+    bool foraX = (r1.superiorDireito.x < r2.inferiorEsquerdo.x) || (r2.superiorDireito.x < r1.inferiorEsquerdo.x);
+    bool foraY = (r1.superiorDireito.y < r2.inferiorEsquerdo.y) || (r2.superiorDireito.y < r1.inferiorEsquerdo.y);
     return !(foraX || foraY);
 }
 
@@ -114,7 +117,7 @@ std::vector<AreaVerde> RTree::buscarPorRegiao(const Retangulo& regiaoBusca) {
     return resultados;
 }
 
-// --- NOVAS CONSULTAS OBRIGATÓRIAS ---
+// --- CONSULTAS OBRIGATÓRIAS ---
 
 void RTree::coletarTodas(std::shared_ptr<No> no, std::vector<AreaVerde>& todas) {
     if (no->isFolha) {
@@ -128,7 +131,7 @@ std::vector<AreaVerde> RTree::buscarPorDensidade(const std::string& densidade) {
     std::vector<AreaVerde> todas, filtradas;
     coletarTodas(raiz, todas);
     for(const auto& a : todas) {
-        if(a.densidade == densidade) filtradas.push_back(a);
+        if(a.getTipoVegetacao() == densidade) filtradas.push_back(a);
     }
     return filtradas;
 }
@@ -140,7 +143,7 @@ std::vector<std::pair<AreaVerde, AreaVerde>> RTree::buscarSobreposicoes() {
     
     for (size_t i = 0; i < todas.size(); ++i) {
         for (size_t j = i + 1; j < todas.size(); ++j) {
-            if (intercepta(todas[i].boundingBox, todas[j].boundingBox)) {
+            if (intercepta(todas[i].getRetangulo(), todas[j].getRetangulo())) {
                 sobreposicoes.push_back({todas[i], todas[j]});
             }
         }
@@ -149,8 +152,8 @@ std::vector<std::pair<AreaVerde, AreaVerde>> RTree::buscarSobreposicoes() {
 }
 
 double RTree::distanciaPontoRetangulo(double px, double py, const Retangulo& r) {
-    double dx = std::max({0.0, r.x - px, px - (r.x + r.largura)});
-    double dy = std::max({0.0, r.y - py, py - (r.y + r.altura)});
+    double dx = std::max({0.0, static_cast<double>(r.inferiorEsquerdo.x) - px, px - static_cast<double>(r.superiorDireito.x)});
+    double dy = std::max({0.0, static_cast<double>(r.inferiorEsquerdo.y) - py, py - static_cast<double>(r.superiorDireito.y)});
     return std::sqrt(dx*dx + dy*dy);
 }
 
@@ -158,7 +161,7 @@ std::vector<AreaVerde> RTree::buscarPorRaio(double cx, double cy, double raio) {
     std::vector<AreaVerde> todas, noRaio;
     coletarTodas(raiz, todas);
     for(const auto& a : todas) {
-        if (distanciaPontoRetangulo(cx, cy, a.boundingBox) <= raio) {
+        if (distanciaPontoRetangulo(cx, cy, a.getRetangulo()) <= raio) {
             noRaio.push_back(a);
         }
     }
@@ -174,10 +177,10 @@ AreaVerde* RTree::buscarVizinhoMaisProximo(double x, double y) {
     double menorDistancia = std::numeric_limits<double>::max();
 
     for(auto& a : todas) {
-        double dist = distanciaPontoRetangulo(x, y, a.boundingBox);
+        double dist = distanciaPontoRetangulo(x, y, a.getRetangulo());
         if (dist < menorDistancia) {
             menorDistancia = dist;
-            maisProximo = new AreaVerde(a);
+            maisProximo = new AreaVerde(a.getId(), a.getNome(), a.getRetangulo(), a.getTipoVegetacao());
         }
     }
     return maisProximo;
