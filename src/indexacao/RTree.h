@@ -5,14 +5,7 @@
 #include <memory>
 #include <string>
 #include "../indexacao/QuadTree.h" // Retangulo vem daqui
-
-struct AreaVerde {
-    int id;
-    Retangulo boundingBox;
-    std::string nome;
-    std::string tipo;
-    std::string densidade; 
-};
+#include "../core/AreaVerde.h"
 
 const int MAX_ENTRIES = 4;
 const int MIN_ENTRIES = 2;
