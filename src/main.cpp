@@ -68,9 +68,8 @@ void exemplo_resultado_QuadTree(){
     qt.inserir(Ponto(60, 90));
     qt.inserir(Ponto(40, 20));
     qt.inserir(Ponto(30, 20));
-    cout << "[!] Exemplo da Leticia processado nos bastidores.\n";
 
-    VisualizadorSVG::exportar("resultados/quadtree_exemplo.svg", qt); 
+    VisualizadorSVG::exportar("resultados/quadtree_exemplo.svg", qt);
 }
 
 int main() {
@@ -122,8 +121,7 @@ int main() {
                 
                 rtree.inserir(novaArea);
                 
-                Ponto centro(x + (l/2), y + (a/2));
-                quadtree.inserir(centro);
+                quadtree.inserir(Ponto(x + (l/2), y + (a/2)));
                 
                 // Salvando permanentemente no arquivo
                 GerenciadorArquivos::gravarArea(arquivoDados, novaArea, true);
@@ -190,6 +188,10 @@ int main() {
     }
 
     exemplo_resultado_QuadTree();
+    
+    return 0;
+}
+
     
     return 0;
 }
