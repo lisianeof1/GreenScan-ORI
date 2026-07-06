@@ -1,24 +1,5 @@
 #include "QuadTree.h"
 
-Ponto::Ponto(double x, double y){
-    this->x = x;
-    this->y = y;
-}
-
-Retangulo::Retangulo(double x, double y, double largura, double altura){
-    this->x = x;
-    this->y = y;
-    this->largura = largura;
-    this->altura = altura;
-}
-
-bool Retangulo::tem_ponto(const Ponto &p) const{
-    return p.x >= x &&
-           p.x <= x + largura &&
-           p.y >= y &&
-           p.y <= y + altura;
-}
-
 QuadTree::QuadTree(const Retangulo &limite, int capacidade){
     this->limite = limite;
     this->capacidade = capacidade;
@@ -39,15 +20,15 @@ QuadTree::~QuadTree(){
 };
 
 void QuadTree::subdividir(){
-    double x = limite.x;
-    double y = limite.y;
-    double metadeLargura = limite.largura / 2.0;
-    double metadeAltura = limite.altura / 2.0;
+    int x = limite.inferiorEsquerdo.x;
+    int y = limite.inferiorEsquerdo.y;
+    int metadeLargura = limite.largura() / 2;
+    int metadeAltura = limite.altura() / 2;
 
-    Retangulo areaNO(x, y, metadeLargura, metadeAltura);
-    Retangulo areaNE(x + metadeLargura, y, metadeLargura, metadeAltura);
-    Retangulo areaSO(x, y + metadeAltura, metadeLargura, metadeAltura);
-    Retangulo areaSE(x + metadeLargura, y + metadeAltura, metadeLargura, metadeAltura);
+    Retangulo areaNO(Ponto(x, y), Ponto(x + metadeLargura, y + metadeAltura));
+    Retangulo areaNE(Ponto(x + metadeLargura, y), Ponto(x + limite.largura(), y + metadeAltura));
+    Retangulo areaSO(Ponto(x, y + metadeAltura), Ponto(x + metadeLargura, y + limite.altura()));
+    Retangulo areaSE(Ponto(x + metadeLargura, y + metadeAltura), Ponto(x + limite.largura(), y + limite.altura()));
 
     nordeste = new QuadTree(areaNE, capacidade);
     noroeste = new QuadTree(areaNO, capacidade);
@@ -67,14 +48,12 @@ bool QuadTree::inserir(const Ponto &ponto){
 
     if(!dividida){
         subdividir();
-
         for(const Ponto &p : pontos){
             nordeste->inserir(p);
             noroeste->inserir(p);
             sudeste->inserir(p);
             sudoeste->inserir(p);
         }
-
         pontos.clear();
     }
 
