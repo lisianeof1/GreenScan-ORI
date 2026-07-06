@@ -57,6 +57,3 @@ void VisualizadorSVG::exportar(const string &nomeArquivo, const QuadTree &qt)
     arquivo << "</svg>\n";
     arquivo.close();
 }
-
-    arquivo.close();
-}
