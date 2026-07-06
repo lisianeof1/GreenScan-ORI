@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "AreaVerde.h"
+#include "../core/AreaVerde.h"
 
 /**
  * Responsavel por simular o "banco de dados em arquivo":
