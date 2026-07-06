@@ -1,75 +1,56 @@
-# GreenScan 🌱
+# GreenScan - Sistema de Consulta Espacial de Áreas Verdes
 
-**Disciplina:** Organização e Recuperação da Informação (ORI)
-**Equipe:** 
-* Kamila de Freitas Alves
-* Letícia Viggiani Moura
-* Lisiane de Oliveira Ferreira
+O GreenScan é um sistema de indexação e consulta espacial desenvolvido para o gerenciamento de áreas verdes. Este projeto foi construído para a disciplina ministrada pelo professor Roberto Ferrari na Universidade Federal de São Carlos (UFSCar). 
+
+O sistema implementa estruturas de dados espaciais avançadas (**R-Tree** e **QuadTree**) para garantir extrema eficiência em buscas bidimensionais, além de persistência de dados em disco e exportação visual do particionamento espacial.
 
 ---
 
-## 📌 Sobre o Projeto
-O **GreenScan** é um protótipo desenvolvido em C++ focado na organização, armazenamento e recuperação eficiente de dados espaciais. O sistema trabalha sobre um mapa cartesiano 2D simulado (1000x1000 unidades) que representa áreas verdes de São Carlos.
-
-O objetivo central é implementar do zero e comparar o uso de duas estruturas de dados avançadas para memória secundária:
-1. **QuadTree:** Para particionamento hierárquico do espaço do mapa.
-2. **R-Tree:** Para indexação e agrupamento dos polígonos (Minimum Bounding Rectangles - MBR) das áreas verdes.
+## Equipe de Desenvolvimento
+* **Lisiane:** Motor de Consultas e Integração, Implementação da R-Tree, Lógica de Consultas Espaciais e Menu Principal.
+* **Letícia:** Implementação da QuadTree, Lógica de Particionamento e Visualizador/Exportador de mapas SVG.
+* **Kamila:** Estruturas Base (Core) e Módulo de Armazenamento/Serialização (Persistência em arquivo `.txt`).
 
 ---
 
-## ⚙️ Funcionalidades e Consultas
-O sistema realiza a leitura de arquivos de texto simulando armazenamento externo e responde às seguintes consultas espaciais:
-1. Busca por região (quais áreas estão dentro de um retângulo).
-2. Busca pelo vizinho mais próximo a um ponto (Nearest Neighbor).
-3. Busca por densidade (alta/média/baixa).
-4. Contagem de áreas por quadrante.
-5. Detecção de sobreposição entre áreas.
-6. Busca por raio circular a partir de um ponto.
+## Funcionalidades (Motor de Consultas)
 
-A visualização do particionamento espacial será exportada para o formato vetorial SVG.
+O coração do sistema atende a **6 consultas espaciais obrigatórias**:
 
----
+1. **Busca por Região (R-Tree):** Retorna todas as áreas verdes contidas dentro de uma janela (bounding box) de busca.
+2. **Vizinho Mais Próximo (R-Tree):** Calcula a distância euclidiana e encontra a área verde mais próxima de um ponto `(X, Y)` fornecido.
+3. **Filtro por Tipo de Vegetação (R-Tree):** Varredura indexada para retornar áreas verdes filtradas por características (ex: Grama, Bosque).
+4. **Contagem por Quadrante (QuadTree):** Navegação recursiva na QuadTree para exibir a quantidade de áreas agrupadas por região do mapa.
+5. **Análise de Sobreposição (R-Tree):** Identificação de conflitos espaciais onde duas ou mais áreas verdes se cruzam.
+6. **Busca Radial (R-Tree):** Retorna as áreas que estão dentro de um raio de distância específico a partir de um ponto central.
 
-## 👩‍💻 Divisão de Tarefas
-
-O projeto foi arquitetado em módulos para facilitar o desenvolvimento paralelo:
-
-**1. Kamila (Módulo Core e Armazenamento)**
-* **Responsabilidade:** Criar a estrutura básica e a simulação do banco de dados em arquivo.
-* **Arquivos principais:** `Ponto.h`, `Retangulo.h`, `AreaVerde.h/cpp` e `GerenciadorArquivos.h/cpp`.
-* **Foco:** Gerar aleatoriamente as áreas verdes, gravá-las no arquivo delimitado (`;`) e implementar o leitor sequencial.
-
-**2. Letícia (Módulo QuadTree e Visualização)**
-* **Responsabilidade:** Particionamento do espaço e saída gráfica.
-* **Arquivos principais:** `QuadTree.h/cpp` e `VisualizadorSVG.h/cpp`.
-* **Foco:** Implementar a lógica de divisão em 4 quadrantes da QuadTree e exportar o resultado final e os *bounding boxes* para um arquivo `.svg`.
-
-**3. Lisiane (Módulo R-Tree, Motor de Consultas e Main)**
-* **Responsabilidade:** Indexação de objetos, regras de busca e integração.
-* **Arquivos principais:** `RTree.h/cpp`, `MotorConsultas.h/cpp` e `main.cpp`.
-* **Foco:** Implementar a R-Tree para os polígonos, amarrar as 6 consultas obrigatórias no Motor e criar o menu interativo via terminal executando os módulos da equipe.
+**Recursos Extras:**
+* **Armazenamento Persistente:** Os dados inseridos em memória são gravados e lidos automaticamente do arquivo `areas_verdes.txt`, utilizando serialização separada por ponto e vírgula (`;`).
+* **Exportação Visual:** Geração automática do arquivo `mapa_greenscan.svg`, permitindo a visualização gráfica da QuadTree e dos pontos no navegador de internet.
 
 ---
 
-## 🚀 Como Contribuir (Fluxo Git)
-Para manter o repositório organizado e evitar conflitos de código, seguiremos este fluxo:
+## Estrutura do Projeto
 
-1. **Atualize seu repositório local:**
-   Antes de começar a programar no dia, baixe as alterações mais recentes:
-   `git pull origin main`
+O código-fonte segue uma arquitetura modular dividida por responsabilidades:
 
-2. **Programe nos seus arquivos:**
-   Trabalhe apenas nos `.cpp` e `.h` que estão sob a sua responsabilidade listada acima.
-
-3. **Salve e suba suas alterações:**
-   `git add .`
-   `git commit -m "Descricao clara do que voce fez"`
-   `git push origin main`
-
-*Atenção: A integração final será feita pela Lisiane no arquivo `main.cpp`. Se precisarem alterar um arquivo que não seja o seu, comuniquem a equipe primeiro!*
-
-###Anotações: o que preciso fazer (Lisi)
-- apagar main.cpp da leticia, antes colocar o conteudo na main ja existente
-- colocar todos os codigos da leticia no lugar certo se ela n colocar
-- acrescentar tudo na main original
-- consultas
+```text
+GreenScan/
+├── areas_verdes.txt            # Arquivo de banco de dados (gerado automaticamente)
+├── resultados/                 # Pasta destino para os arquivos exportados
+│   └── mapa_greenscan.svg      # Exportação visual do mapa
+└── src/
+    ├── armazenamento/          # Leitura, gravação e persistência de dados
+    │   └── GerenciadorArquivos.h / .cpp
+    ├── consultas/              # Centralização e regras de negócio das 6 queries
+    │   └── MotorConsultas.h / .cpp
+    ├── core/                   # Estruturas de dados primitivas do domínio
+    │   ├── AreaVerde.h / .cpp
+    │   ├── Ponto.h
+    │   └── Retangulo.h
+    ├── indexacao/              # Estruturas de dados avançadas
+    │   ├── QuadTree.h / .cpp
+    │   └── RTree.h / .cpp
+    ├── visualizacao/           # Módulo de exportação gráfica
+    │   └── VisualizadorSVG.h / .cpp
+    └── main.cpp                # Ponto de entrada e Menu CLI
