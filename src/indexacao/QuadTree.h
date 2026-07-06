@@ -2,6 +2,8 @@
 #define QUADTREE_H
 
 #include <vector>
+#include "../core/Ponto.h"
+#include "../core/Retangulo.h"
 
 using namespace std;
 
