@@ -1,5 +1,14 @@
 #include <iostream>
 #include <string>
+#include <vector>
+
+// Inclusões dos Módulos Core e Armazenamento (Kamila)
+#include "core/Ponto.h"
+#include "core/Retangulo.h"
+#include "core/AreaVerde.h"
+#include "armazenamento/GerenciadorArquivos.h"
+
+// Inclusões de Indexação, Consultas e Visualização (Lisiane e Letícia)
 #include "indexacao/QuadTree.h"
 #include "indexacao/RTree.h"
 #include "consultas/MotorConsultas.h"
@@ -12,7 +21,7 @@ void exibirMenu() {
     cout << "1. Inserir Area Verde Manual\n";
     cout << "2. Consulta: Areas dentro de uma Regiao (R-Tree)\n";
     cout << "3. Consulta: Vizinho Mais Proximo (R-Tree)\n";
-    cout << "4. Consulta: Areas por Densidade (R-Tree)\n";
+    cout << "4. Consulta: Areas por Tipo de Vegetacao (R-Tree)\n";
     cout << "5. Consulta: Quantidade por Regiao (QuadTree)\n";
     cout << "6. Consulta: Sobreposicao de Areas (R-Tree)\n";
     cout << "7. Consulta: Areas dentro de um Raio (R-Tree)\n";
@@ -22,7 +31,7 @@ void exibirMenu() {
 }
 
 void exemplo_resultado_QuadTree(){
-    Retangulo area(0, 0, 500, 500);
+    Retangulo area(Ponto(0, 0), Ponto(500, 500));
     QuadTree qt(area, 4);
 
     qt.inserir(Ponto(100, 100));
@@ -59,26 +68,41 @@ void exemplo_resultado_QuadTree(){
     qt.inserir(Ponto(60, 90));
     qt.inserir(Ponto(40, 20));
     qt.inserir(Ponto(30, 20));
-    qt.inserir(Ponto(40, 30));
-    qt.inserir(Ponto(70, 20));
-    qt.inserir(Ponto(80, 90));
-    qt.inserir(Ponto(60, 100));
-    qt.inserir(Ponto(110, 130));
-    qt.inserir(Ponto(80, 140));
-    qt.inserir(Ponto(240, 160));
-    qt.inserir(Ponto(80, 70));
+    cout << "[!] Exemplo da Leticia processado nos bastidores.\n";
 
-    VisualizadorSVG::exportar("resultados/quadtree.svg", qt); 
+    VisualizadorSVG::exportar("resultados/quadtree_exemplo.svg", qt); 
 }
 
 int main() {
-    Retangulo areaMapa(0, 0, 1000, 1000);
+    Retangulo areaMapa(Ponto(0, 0), Ponto(1000, 1000));
     QuadTree quadtree(areaMapa, 4);
     RTree rtree;
     MotorConsultas motor(rtree, quadtree);
 
     int opcao = 0;
     int idCounter = 1;
+    string arquivoDados = "areas_verdes.txt";
+
+    cout << "Inicializando GreenScan...\n";
+    // Integração: Carregando dados do disco no início do programa
+    if (GerenciadorArquivos::arquivoExiste(arquivoDados)) {
+        vector<AreaVerde> dados_iniciais = GerenciadorArquivos::lerTodas(arquivoDados);
+        for (const auto& area : dados_iniciais) {
+            rtree.inserir(area);
+            
+            Retangulo r = area.getRetangulo();
+            int cx = r.inferiorEsquerdo.x + (r.largura() / 2);
+            int cy = r.inferiorEsquerdo.y + (r.altura() / 2);
+            quadtree.inserir(Ponto(cx, cy));
+            
+            if (area.getId() >= idCounter) {
+                idCounter = area.getId() + 1;
+            }
+        }
+        cout << "[+] " << dados_iniciais.size() << " areas carregadas do disco com sucesso!\n";
+    } else {
+        cout << "[-] Nenhum arquivo de dados encontrado. Iniciando base zerada.\n";
+    }
 
     while (opcao != 9) {
         exibirMenu();
@@ -86,28 +110,38 @@ int main() {
 
         switch (opcao) {
             case 1: {
-                double x, y, l, a;
-                string nome, tipo, densidade;
+                int x, y, l, a;
+                string nome, tipo;
                 cout << "Coordenadas (X Y Larg Alt) separadas por espaco: ";
                 cin >> x >> y >> l >> a;
                 cout << "Nome da Area: "; cin >> ws; getline(cin, nome);
-                cout << "Tipo (Parque, Praca, etc): "; getline(cin, tipo);
-                cout << "Densidade (Alta, Media, Baixa): "; getline(cin, densidade);
+                cout << "Tipo de Vegetacao (Grama, Bosque, etc): "; getline(cin, tipo);
                 
-                AreaVerde novaArea = {idCounter++, {x, y, l, a}, nome, tipo, densidade};
+                Retangulo ret(Ponto(x, y), Ponto(x + l, y + a));
+                AreaVerde novaArea(idCounter++, nome, ret, tipo);
+                
                 rtree.inserir(novaArea);
                 
                 Ponto centro(x + (l/2), y + (a/2));
                 quadtree.inserir(centro);
-                cout << "[!] Sucesso.\n";
+                
+                // Salvando permanentemente no arquivo
+                GerenciadorArquivos::gravarArea(arquivoDados, novaArea, true);
+                
+                cout << "[!] Sucesso! Area salva em memoria e no disco.\n";
                 break;
             }
             case 2: {
-                double x, y, l, a;
+                int x, y, l, a;
                 cout << "Regiao de Busca (X Y Larg Alt): ";
                 cin >> x >> y >> l >> a;
-                vector<AreaVerde> res = motor.executarBuscaPorRegiao({x, y, l, a});
-                for (const auto& area : res) cout << "ID: " << area.id << " | " << area.nome << "\n";
+                
+                Retangulo busca(Ponto(x, y), Ponto(x + l, y + a));
+                vector<AreaVerde> res = motor.executarBuscaPorRegiao(busca);
+                
+                for (const auto& area : res) {
+                    cout << "ID: " << area.getId() << " | " << area.getNome() << "\n";
+                }
                 break;
             }
             case 3: {
@@ -117,10 +151,12 @@ int main() {
                 break;
             }
             case 4: {
-                string densidade;
-                cout << "Densidade desejada: "; cin >> ws; getline(cin, densidade);
-                vector<AreaVerde> res = motor.executarBuscaPorDensidade(densidade);
-                for (const auto& area : res) cout << "ID: " << area.id << " | " << area.nome << "\n";
+                string tipo;
+                cout << "Tipo de vegetacao desejada: "; cin >> ws; getline(cin, tipo);
+                vector<AreaVerde> res = motor.executarBuscaPorDensidade(tipo);
+                for (const auto& area : res) {
+                    cout << "ID: " << area.getId() << " | " << area.getNome() << "\n";
+                }
                 break;
             }
             case 5: {
@@ -135,22 +171,24 @@ int main() {
                 double x, y, raio;
                 cout << "Centro do Raio (X Y Raio): "; cin >> x >> y >> raio;
                 vector<AreaVerde> res = motor.executarBuscaPorRaio(x, y, raio);
-                for (const auto& area : res) cout << "ID: " << area.id << " | " << area.nome << "\n";
+                for (const auto& area : res) {
+                    cout << "ID: " << area.getId() << " | " << area.getNome() << "\n";
+                }
                 break;
             }
             case 8: {
                 VisualizadorSVG::exportar("resultados/mapa_greenscan.svg", quadtree);
-                cout << "[!] SVG gerado.\n";
+                cout << "[!] SVG gerado na pasta resultados/.\n";
                 break;
             }
             case 9:
+                cout << "Encerrando o sistema. Ate logo!\n";
                 break;
             default:
-                cout << "Opcao invalida.\n";
+                cout << "Opcao invalida. Tente novamente.\n";
         }
     }
 
-    //exemplo para simplificar
     exemplo_resultado_QuadTree();
     
     return 0;
