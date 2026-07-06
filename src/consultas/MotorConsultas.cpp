@@ -12,7 +12,7 @@ std::vector<AreaVerde> MotorConsultas::executarBuscaPorRegiao(const Retangulo& r
 void MotorConsultas::executarBuscaMaisProximo(double x, double y) {
     AreaVerde* area = rtree.buscarVizinhoMaisProximo(x, y);
     if (area != nullptr) {
-        cout << "Vizinho mais proximo: ID " << area->id << " (" << area->nome << ")\n";
+        cout << "Vizinho mais proximo: ID " << area->getId() << " (" << area->getNome() << ")\n";
         delete area;
     } else {
         cout << "Nenhuma area verde cadastrada.\n";
@@ -26,7 +26,7 @@ std::vector<AreaVerde> MotorConsultas::executarBuscaPorDensidade(const std::stri
 void MotorConsultas::contarQuadTreeRecursivo(const QuadTree* qt, int nivel) {
     if (!qt) return;
     const Retangulo& r = qt->getLimite();
-    cout << "Nivel " << nivel << " [Regiao X:" << r.x << " Y:" << r.y << "]: " 
+    cout << "Nivel " << nivel << " [Regiao X:" << r.inferiorEsquerdo.x << " Y:" << r.inferiorEsquerdo.y << "]: " 
          << qt->getPontos().size() << " areas verdes.\n";
          
     if (qt->estaDividida()) {
@@ -48,7 +48,7 @@ void MotorConsultas::executarBuscaSobreposicao() {
         cout << "Nenhuma area verde se sobrepoe.\n";
     } else {
         for (const auto& par : sobreposicoes) {
-            cout << "Conflito Espacial: ID " << par.first.id << " cruza com ID " << par.second.id << "\n";
+            cout << "Conflito Espacial: ID " << par.first.getId() << " cruza com ID " << par.second.getId() << "\n";
         }
     }
 }
