@@ -44,3 +44,6 @@ public:
 };
 
 #endif // AREAVERDE_H
+
+
+#endif // AREAVERDE_H
